@@ -1,0 +1,56 @@
+<launch>
+  <arg name="config_file" default=""/>
+  <arg name="lidar_topic" default="/front_lidar"/>
+  <arg name="imu_topic" default="/front_lidar/imu"/>
+  <arg name="odom_topic" default="/sapphire/odometry"/>
+  <arg name="deskewed_topic" default="/sapphire/deskewed"/>
+  <arg name="trajectory_topic" default="/sapphire/trajectory"/>
+  <arg name="pgo_map_topic" default="/sapphire/pgo/map"/>
+  <arg name="pgo_graph_topic" default="/sapphire/pgo/graph"/>
+  <arg name="world_frame" default="map"/>
+  <arg name="lidar_frame" default="lidar"/>
+  <arg name="imu_frame" default="imu"/>
+  <arg name="pose_frame" default="lidar"/>
+  <arg name="lidar_time_offset" default="0.0"/>
+  <arg name="imu_time_offset" default="0.0"/>
+  <arg name="trajectory_output" default=""/>
+  <arg name="rviz_image_topic" default="/camera/image_raw"/>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="rviz" default="false"/>
+  <arg name="rviz_config"
+       default="$(find sapphire_ros1)/launch/display.rviz"/>
+
+  <param name="/use_sim_time" value="$(arg use_sim_time)"/>
+
+  <node pkg="sapphire_ros1"
+        type="sapphire_ros_node"
+        name="sapphire_ros"
+        output="screen">
+    <param name="config_file" value="$(arg config_file)"/>
+    <param name="world_frame" value="$(arg world_frame)"/>
+    <param name="lidar_frame" value="$(arg lidar_frame)"/>
+    <param name="imu_frame" value="$(arg imu_frame)"/>
+    <param name="pose_frame" value="$(arg pose_frame)"/>
+    <param name="lidar_time_offset" value="$(arg lidar_time_offset)"/>
+    <param name="imu_time_offset" value="$(arg imu_time_offset)"/>
+    <param name="trajectory_output" value="$(arg trajectory_output)"/>
+
+    <remap from="lidar/points" to="$(arg lidar_topic)"/>
+    <remap from="imu/data" to="$(arg imu_topic)"/>
+    <remap from="sapphire/odometry" to="$(arg odom_topic)"/>
+    <remap from="sapphire/deskewed" to="$(arg deskewed_topic)"/>
+    <remap from="sapphire/trajectory" to="$(arg trajectory_topic)"/>
+    <remap from="sapphire/pgo/map" to="$(arg pgo_map_topic)"/>
+    <remap from="sapphire/pgo/graph" to="$(arg pgo_graph_topic)"/>
+  </node>
+
+  <node if="$(arg rviz)"
+        pkg="rviz"
+        type="rviz"
+        name="rviz"
+        args="-d $(arg rviz_config)"
+        required="false">
+    <remap from="visualization_marker_array" to="$(arg pgo_graph_topic)"/>
+    <remap from="image_raw" to="$(arg rviz_image_topic)"/>
+  </node>
+</launch>

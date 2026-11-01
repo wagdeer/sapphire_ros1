@@ -1,0 +1,11 @@
+build/
+devel/
+install/
+logs/
+
+__pycache__/
+*.py[cod]
+
+.catkin_tools/
+.catkin_workspace
+.DS_Store
