@@ -8,7 +8,7 @@ Panels:
         - /Odometry1
         - /Trajectory1
         - /Deskewed1
-        - /Camera1
+        - /PGO Map1
       Splitter Ratio: 0.5
     Tree Height: 720
   - Class: rviz/Selection
@@ -106,16 +106,33 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Class: rviz/Image
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
       Enabled: true
-      Image Topic: /alphasense/cam0/image_raw
-      Max Value: 1
-      Median window: 3
-      Min Value: 0
-      Name: Camera
-      Normalize Range: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: PGO Map
+      Position Transformer: XYZ
       Queue Size: 1
-      Transport Hint: raw
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.1
+      Style: Flat Squares
+      Topic:
+        Value: /sapphire/pgo/map
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:

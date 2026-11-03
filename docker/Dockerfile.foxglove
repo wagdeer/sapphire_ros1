@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1.7
+
+ARG SAPPHIRE_ROS1_IMAGE=sapphire:noetic
+FROM ${SAPPHIRE_ROS1_IMAGE}
+
+USER root
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG APT_RETRIES=5
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt-get -o "Acquire::Retries=${APT_RETRIES}" update \
+    && apt-get -o "Acquire::Retries=${APT_RETRIES}" install \
+        -y --no-install-recommends \
+        ros-noetic-foxglove-bridge \
+    && rm -rf /var/lib/apt/lists/*
+
+USER sapphire
+WORKDIR /workspace
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]

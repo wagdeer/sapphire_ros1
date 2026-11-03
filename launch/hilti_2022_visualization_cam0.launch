@@ -1,0 +1,33 @@
+<launch>
+  <arg name="config_file" default=""/>
+  <arg name="lidar_time_offset" default="0.0"/>
+  <arg name="imu_time_offset" default="0.0"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="bag" default=""/>
+  <arg name="rate" default="0.5"/>
+  <arg name="duration" default="604800.0"/>
+  <arg name="trajectory_output" default=""/>
+  <arg name="bag_required" default="true"/>
+
+  <node if="$(eval arg('bag') != '')"
+        pkg="rosbag"
+        type="play"
+        name="hilti_bag_player"
+        args="--clock --delay 2.0 --rate $(arg rate) --duration $(arg duration) --topics /hesai/pandar /alphasense/imu /alphasense/cam0/image_raw --bags $(arg bag)"
+        required="$(arg bag_required)"/>
+
+  <include file="$(find sapphire_ros1)/launch/sapphire.launch">
+    <arg name="config_file" value="$(arg config_file)"/>
+    <arg name="lidar_topic" value="/hesai/pandar"/>
+    <arg name="imu_topic" value="/alphasense/imu"/>
+    <arg name="world_frame" value="map"/>
+    <arg name="lidar_frame" value="PandarXT-32"/>
+    <arg name="imu_frame" value="imu_sensor_frame"/>
+    <arg name="pose_frame" value="imu"/>
+    <arg name="lidar_time_offset" value="$(arg lidar_time_offset)"/>
+    <arg name="imu_time_offset" value="$(arg imu_time_offset)"/>
+    <arg name="trajectory_output" value="$(arg trajectory_output)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="rviz" value="false"/>
+  </include>
+</launch>

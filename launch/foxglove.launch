@@ -1,0 +1,11 @@
+<launch>
+  <arg name="port" default="8765"/>
+  <arg name="address" default="0.0.0.0"/>
+  <arg name="num_threads" default="4"/>
+
+  <include file="$(find foxglove_bridge)/launch/foxglove_bridge.launch">
+    <arg name="port" value="$(arg port)"/>
+    <arg name="address" value="$(arg address)"/>
+    <arg name="num_threads" value="$(arg num_threads)"/>
+  </include>
+</launch>

@@ -1,6 +1,6 @@
 Panels:
   - Class: rviz/Displays
-    Help Height: 78
+    Help Height: 0
     Name: Displays
     Property Tree Widget:
       Expanded:
@@ -10,20 +10,27 @@ Panels:
         - /Deskewed1
         - /PGO Map1
         - /PGO Graph1
-        - /Camera1
       Splitter Ratio: 0.5
-    Tree Height: 720
+    Tree Height: 504
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
+    Expanded: ~
     Name: Tool Properties
-    Splitter Ratio: 0.588
+    Splitter Ratio: 0.5879999995231628
   - Class: rviz/Views
+    Expanded:
+      - /Current View1
     Name: Views
+    Splitter Ratio: 0.5
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
     SyncSource: Deskewed
+Preferences:
+  PromptSaveOnExit: true
+Toolbars:
+  toolButtonStyle: 2
 Visualization Manager:
   Class: ""
   Displays:
@@ -33,7 +40,7 @@ Visualization Manager:
       Color: 160; 160; 164
       Enabled: true
       Line Style:
-        Line Width: 0.03
+        Line Width: 0.029999999329447746
         Value: Lines
       Name: Grid
       Normal Cell Count: 0
@@ -45,40 +52,64 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Angle Tolerance: 0.1
+    - Angle Tolerance: 0.10000000149011612
       Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
       Enabled: true
       Keep: 1
       Name: Odometry
-      Position Tolerance: 0.1
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
       Shape:
         Alpha: 1
         Axes Length: 1
-        Axes Radius: 0.1
+        Axes Radius: 0.10000000149011612
         Color: 255; 25; 0
-        Head Length: 0.3
-        Head Radius: 0.1
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
         Shaft Length: 1
-        Shaft Radius: 0.05
+        Shaft Radius: 0.05000000074505806
         Value: Axes
-      Topic:
-        Value: /sapphire/odometry
+      Topic: /sapphire/odometry
+      Unreliable: false
       Value: true
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
       Color: 255; 170; 0
       Enabled: true
-      Head Diameter: 0.3
-      Head Length: 0.2
-      Length: 0.3
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
       Line Style: Lines
-      Line Width: 0.05
+      Line Width: 0.05000000074505806
       Name: Trajectory
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
       Pose Color: 255; 85; 255
       Pose Style: None
-      Topic:
-        Value: /sapphire/trajectory
+      Queue Size: 10
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /sapphire/trajectory
+      Unreliable: false
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -90,7 +121,7 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -101,10 +132,10 @@ Visualization Manager:
       Queue Size: 1
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.1
+      Size (m): 0.10000000149011612
       Style: Flat Squares
-      Topic:
-        Value: /sapphire/deskewed
+      Topic: /sapphire/deskewed
+      Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -117,8 +148,8 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color: 90; 180; 255
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -129,37 +160,27 @@ Visualization Manager:
       Queue Size: 1
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.1
+      Size (m): 0.10000000149011612
       Style: Flat Squares
-      Topic:
-        Value: /sapphire/pgo/map
+      Topic: /sapphire/pgo/map
+      Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
+      Marker Topic: visualization_marker_array
       Name: PGO Graph
       Namespaces:
         loop_edges: true
         nodes: true
         odometry_edges: true
       Queue Size: 1
-      Topic: /sapphire/pgo/graph
-      Value: true
-    - Class: rviz/Image
-      Enabled: true
-      Image Topic: image_raw
-      Max Value: 1
-      Median window: 5
-      Min Value: 0
-      Name: Camera
-      Normalize Range: true
-      Queue Size: 2
-      Transport Hint: raw
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
+    Default Light: true
     Fixed Frame: map
     Frame Rate: 30
   Name: root
@@ -171,31 +192,51 @@ Visualization Manager:
     - Class: rviz/FocusCamera
     - Class: rviz/Measure
     - Class: rviz/SetInitialPose
+      Theta std deviation: 0.2617993950843811
       Topic: /initialpose
+      X std deviation: 0.5
+      Y std deviation: 0.5
     - Class: rviz/SetGoal
       Topic: /move_base_simple/goal
   Value: true
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 43.7
+      Distance: 238.1630401611328
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 0.22780990600585938
+        Y: -23.85235023498535
+        Z: 2.326300859451294
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
       Name: Current View
-      Near Clip Distance: 0.01
-      Pitch: 1.57
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.889796257019043
       Target Frame: <Fixed Frame>
-      Value: Orbit (rviz)
-      Yaw: 2.09
+      Yaw: 2.6863701343536377
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: false
-  Height: 1024
-  Hide Left Dock: false
+    collapsed: true
+  Height: 2067
+  Hide Left Dock: true
   Hide Right Dock: false
-  Width: 1600
-  X: 100
-  Y: 100
+  QMainWindow State: 000000ff00000000fd00000001000000000000049b000007bdfc0200000005fb000000100044006900730070006c006100790073000000003b00000233000000c700fffffffb0000001200530065006c0065006300740069006f006e000000023a000000c50000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730000000274000001030000005c00fffffffb0000000a00560069006500770073000000037d0000035b000000a000fffffffb0000000800540069006d006500000006de0000011a0000003700ffffff00000ef4000007bd00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Selection:
+    collapsed: false
+  Time:
+    collapsed: true
+  Tool Properties:
+    collapsed: true
+  Views:
+    collapsed: true
+  Width: 3828
+  X: 0
+  Y: 0

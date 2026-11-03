@@ -2,21 +2,27 @@
 
 Date: 2026-11-01
 
-For exact commands after a host reboot, see
-`docs/HILTI_REPRODUCTION.md`.
+This is the parameter-search log, not the published benchmark. Replay commands
+are in [HILTI_REPRODUCTION.md](HILTI_REPRODUCTION.md). The published Site 1
+numbers are in `sapphire/docs/benchmarks/benchmark_table.md`.
+
+On `site1_handheld_5`, this log's selected run E26 has ATE RMSE 0.061 m and
+1588 poses. The benchmark table lists 0.045 m for a later 1571-pose trajectory
+of the same sequence. Do not cite the two as one measurement. Paths under
+`/workspace/results/` are local artifacts and are not part of this repository.
 
 ## Scope
 
 Tuning sequence:
 
 ```text
-/data/rosbags/site1_handheld_5.bag
+/datasets/hilti-2023/rosbags/site1_handheld_5.bag
 ```
 
 Validation sequence:
 
 ```text
-/data/rosbags/site1_handheld_2.bag
+/datasets/hilti-2023/rosbags/site1_handheld_2.bag
 ```
 
 Both use the HILTI handheld calibration. All 31 raw experiment records are
@@ -151,7 +157,7 @@ correspondence radius and lost the final 17.6 s of the bag. It is marked
 The selected handheld profile is:
 
 ```text
-src/sapphire/cfg/sapphire_hilti_2023_handheld_tuned.toml
+src/sapphire/cfg/sapphire_hilti_2023_handheld.toml
 ```
 
 Important values:
@@ -176,29 +182,27 @@ convergence_gyro_std = 0.0065
 lidar_max_iterations = 64
 ```
 
-`hilti_2023_handheld.launch` now uses this profile by default. The original
-profile remains available for rollback.
+`hilti_2023_handheld.launch` does not bake in a config path. Pass
+`cfg/sapphire_hilti_2023_handheld.toml` as `config_file`. That file is the
+profile selected here. An earlier profile is not kept beside it.
 
 ## Interactive visual-check attempts
 
 These attempts were for operator inspection only and are not part of the 31-run
 formal ranking.
 
-- `e32_rviz_site1_handheld_5` used the full `display.rviz` profile. The node
-  saved 669 poses when interrupted, so the trajectory is partial and was not
-  evaluated. The full RViz process consumed about 80% CPU and did not exit
-  promptly after Ctrl-C.
-- `e33_rviz_light_site1_handheld_5` used the lightweight
-  `visual_check.rviz` profile, which reduced observed RViz CPU use to about
-  26%. The container was force-stopped while it was still playing, so no final
-  trajectory artifact was written.
-- Both stuck visualizations were cleared by stopping and restarting
-  `sapphire_ros1_dev`. The host-mounted workspace and completed formal results
-  were unaffected.
+- `e32_rviz_site1_handheld_5` used `display.rviz`. The node saved 669 poses
+  when interrupted, so the trajectory is partial and was not evaluated. That
+  RViz process consumed about 80% CPU and did not exit promptly after Ctrl-C.
+- `e33_rviz_light_site1_handheld_5` used `visual_check.rviz`, which reduced
+  observed RViz CPU use to about 26%. The container was force-stopped while
+  the bag was still playing, so no final trajectory was written.
+- Both sessions were cleared by restarting the ROS 1 container. Source and
+  completed results on the mounted workspace were kept.
 
-The lightweight profile retains the camera, deskewed point cloud, trajectory,
-and odometry displays while omitting the heavier PGO map and graph displays.
-Recovery commands are in `docs/HILTI_REPRODUCTION.md`.
+`display.rviz` shows the grid, odometry, trajectory, deskewed cloud, PGO map,
+and PGO graph. `visual_check.rviz` shows the same displays except the PGO
+graph. Neither file shows a camera.
 
 ## Remaining work
 

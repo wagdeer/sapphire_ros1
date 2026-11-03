@@ -1,6 +1,6 @@
 # Sapphire ROS 1 Migration Design
 
-Status: implemented; image build and runtime validation pending
+Status: the Noetic adapter, launch files, and pinned toolchain image are implemented. A numeric parity threshold against ROS 2 has not been set.
 
 ## 1. Goal
 
@@ -149,7 +149,7 @@ latched publishers:
 | Stream | ROS 1 behavior |
 |---|---|
 | LiDAR input | `queue_size=1` |
-| IMU input | `queue_size=1` |
+| IMU input | `queue_size=100`, enough to cover the 500 ms scan-end wait |
 | Odometry output | `queue_size=10` |
 | Deskewed cloud | `queue_size=1` |
 | Trajectory path | `queue_size=1`, latched |
@@ -300,13 +300,12 @@ should be defined when the first dataset comparison is available.
 
 Implementation progress:
 
-1. Done: add `package.xml`, catkin `CMakeLists.txt`, and package metadata.
-2. Done: port the C++ wrapper and add conversion tests.
-3. Done: add roslaunch, RViz, and in-node TUM trajectory export.
-4. In progress: build the pinned Docker image.
-5. Pending image: build and test core plus wrapper inside the image.
-6. Pending image: run representative old ROS 1 bags.
-7. Pending dataset comparison: compare outputs against ROS 2.
+1. Done: `package.xml`, catkin `CMakeLists.txt`, and package metadata.
+2. Done: C++ wrapper and conversion tests.
+3. Done: roslaunch, RViz, and in-node TUM export.
+4. Done: pinned Docker image in `docker/Dockerfile`.
+5. Dataset replay is documented in the core repository's `docs/DATASET_REPLAY.md`.
+6. Open: choose numeric acceptance thresholds for a ROS 1 / ROS 2 comparison on the same recording. Exact floating-point equality is not required.
 
 ## 16. Implemented Review Decisions
 

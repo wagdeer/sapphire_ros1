@@ -1,6 +1,5 @@
 <launch>
   <arg name="config_file" default=""/>
-  <arg name="camera_topic" default="/alphasense/cam0/image_raw"/>
   <arg name="lidar_time_offset" default="0.0015846550361175184"/>
   <arg name="imu_time_offset" default="0.0"/>
   <arg name="rviz" default="false"/>
@@ -18,7 +17,7 @@
         pkg="rosbag"
         type="play"
         name="hilti_bag_player"
-        args="--clock --delay 2.0 --rate $(arg rate) --duration $(arg duration) --topics /hesai/pandar /alphasense/imu $(arg camera_topic) --bags $(arg bag)"
+        args="--clock --delay 2.0 --rate $(arg rate) --duration $(arg duration) --topics /hesai/pandar /alphasense/imu --bags $(arg bag)"
         required="$(arg bag_required)"/>
 
   <include file="$(find sapphire_ros1)/launch/sapphire.launch">
@@ -32,7 +31,6 @@
     <arg name="lidar_time_offset" value="$(arg lidar_time_offset)"/>
     <arg name="imu_time_offset" value="$(arg imu_time_offset)"/>
     <arg name="trajectory_output" value="$(arg trajectory_output)"/>
-    <arg name="rviz_image_topic" value="$(arg camera_topic)"/>
     <arg name="use_sim_time" value="$(arg use_sim_time)"/>
     <arg name="rviz" value="$(arg rviz)"/>
     <arg name="rviz_config" value="$(arg rviz_config)"/>

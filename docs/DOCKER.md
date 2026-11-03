@@ -44,10 +44,9 @@ or its Eigen 3.3 installation for Sapphire.
 
 ## Build
 
-Build from the `sapphire_ros1` package root:
+Build from the root of this repository:
 
 ```bash
-cd src/sapphire_ros1
 docker build \
   -f docker/Dockerfile \
   -t sapphire:noetic \

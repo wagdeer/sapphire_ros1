@@ -14,7 +14,6 @@
   <arg name="lidar_time_offset" default="0.0"/>
   <arg name="imu_time_offset" default="0.0"/>
   <arg name="trajectory_output" default=""/>
-  <arg name="rviz_image_topic" default="/camera/image_raw"/>
   <arg name="use_sim_time" default="false"/>
   <arg name="rviz" default="false"/>
   <arg name="rviz_config"
@@ -51,6 +50,5 @@
         args="-d $(arg rviz_config)"
         required="false">
     <remap from="visualization_marker_array" to="$(arg pgo_graph_topic)"/>
-    <remap from="image_raw" to="$(arg rviz_image_topic)"/>
   </node>
 </launch>

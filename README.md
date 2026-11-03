@@ -1,147 +1,113 @@
 # Sapphire ROS 1
 
-ROS 1 Noetic interface for the ROS-independent `sapphire` LiDAR-inertial
-odometry core.
+ROS 1 Noetic interface for [Sapphire](https://github.com/wagdeer/sapphire).
 
-This directory contains a native ROS 1 Noetic catkin package backed by the
-shared ROS-independent `sapphire` core. It consumes generic PointCloud2 and
-IMU messages and has no sensor-driver dependency.
-
-## Documents
-
-- [ROS 1/ROS 2 interface contract](docs/INTERFACE_CONTRACT.md)
-- [HILTI 2023 reproduction after reboot](docs/HILTI_REPRODUCTION.md)
-- [Migration design](docs/MIGRATION.md)
-- [Docker toolchain](docs/DOCKER.md)
-- [HILTI 2023 drift tuning](docs/HILTI_TUNING.md)
-
-Start with `docs/HILTI_REPRODUCTION.md` when resuming after a host reboot. It
-contains the exact container, build, replay, RViz, evaluation, artifact, and
-recovery commands.
-
-## Planned package layout
+Put the core and this package in the same catkin workspace. The core is found
+as the sibling directory `../sapphire`.
 
 ```text
-sapphire_ros1/
-├── CMakeLists.txt
-├── package.xml
-├── include/sapphire_ros1/
-├── launch/
-├── src/
-├── test/
-└── docker/
+catkin_ws/src/
+├── sapphire/          https://github.com/wagdeer/sapphire
+└── sapphire_ros1/
 ```
 
-The core remains a separate sibling package:
+Further reading:
 
-```text
-src/
-├── sapphire/
-├── sapphire_ros1/
-└── sapphire_ros2/
-```
+- [docs/DOCKER.md](docs/DOCKER.md): pinned toolchain and X11
+- [docs/INTERFACE_CONTRACT.md](docs/INTERFACE_CONTRACT.md): topics, frames, and queues
+- [docs/HILTI_REPRODUCTION.md](docs/HILTI_REPRODUCTION.md): HILTI 2023 handheld replay
+- [sapphire/docs/DATASET_REPLAY.md](https://github.com/wagdeer/sapphire/blob/master/docs/DATASET_REPLAY.md): dataset replay in the core repository
 
-ROS 1 and ROS 2 are sibling interface layers. Neither interface is allowed to
-become a dependency of the core.
+## Docker
 
-## Build and run
-
-Inside the pinned Noetic image:
+From this repository:
 
 ```bash
+docker build -f docker/Dockerfile -t sapphire:noetic .
+```
+
+The image is Ubuntu 20.04 with ROS Noetic, and already contains Eigen 3.4.0, PCL 1.14.1, GTSAM 4.3.0, small_gicp 1.0.1, spdlog, and toml++ 3.4.0.
+
+Mount a workspace that already contains `src/sapphire` and `src/sapphire_ros1`:
+
+```bash
+docker run --rm -it -v ~/catkin_ws:/workspace sapphire:noetic
 cd /workspace
-catkin config --extend /opt/ros/noetic \
-  --build-space /workspace/build_ros1 \
-  --devel-space /workspace/devel_ros1 \
-  --cmake-args -DCMAKE_BUILD_TYPE=Release
-catkin build sapphire_ros1
-source devel_ros1/setup.bash
+catkin_make
+source devel/setup.bash
 ```
 
-From the host, start the ROS 1 development container with the HILTI dataset
-mounted read-only at `/data`:
+The image entrypoint sources `/opt/ros/noetic` and, when present,
+`devel_ros1/setup.bash` or `devel/setup.bash`. A workspace that also contains
+a ROS 2 build should use the separate `devel_ros1` layout in
+[docs/DOCKER.md](docs/DOCKER.md) instead of `devel/`. RViz needs the X11
+forwarding shown there. `foxglove_bridge` is not in this image; it is added by
+`docker/Dockerfile.foxglove`.
+
+## Without Docker
+
+Install Noetic and the packages that come from apt:
 
 ```bash
-docker compose -f docker-compose.ros1.yml up -d
-docker exec -it sapphire_ros1_dev bash
+sudo apt install build-essential cmake git pkg-config \
+  libboost-all-dev libflann-dev libomp-dev libspdlog-dev \
+  ros-noetic-pcl-conversions ros-noetic-rosbag \
+  ros-noetic-rviz ros-noetic-tf2-ros
 ```
 
-The existing `docker-compose.yml` remains the ROS 2 development service.
+Noetic's Eigen and PCL are too old. Build these from source, Eigen first, and install them where CMake can find them:
 
-Start the node without RViz:
+| Library | Version |
+|---|---|
+| [Eigen](https://gitlab.com/libeigen/eigen) | 3.4.0 |
+| [PCL](https://github.com/PointCloudLibrary/pcl) | 1.14.1 |
+| [GTSAM](https://github.com/borglab/gtsam) | 4.3.0 |
+| [small_gicp](https://github.com/koide3/small_gicp) | 1.0.1 |
+| [toml++](https://github.com/marzer/tomlplusplus) | 3.4.0 |
+
+On Ubuntu 20.04, configure GTSAM with `-DGTSAM_WITH_TBB=OFF` and apply `docker/patches/gtsam-4.3.0-empty-list.patch` before building. The Dockerfile is the reference for the other configure flags. In particular it builds PCL with VTK turned off, which avoids an extra MPI dependency. Install Eigen before PCL, GTSAM, and small_gicp, and point those builds at that Eigen.
+
+Then build the workspace:
+
+```bash
+source /opt/ros/noetic/setup.bash
+cd ~/catkin_ws
+catkin_make
+source devel/setup.bash
+```
+
+## Run
+
+`config_file` is required. The topic arguments below override the launch
+defaults `/front_lidar` and `/front_lidar/imu`.
 
 ```bash
 roslaunch sapphire_ros1 sapphire.launch \
-  config_file:=/workspace/src/sapphire/cfg/sapphire_mid360.toml
-```
-
-Override input and output topics or enable RViz with launch arguments:
-
-```bash
-roslaunch sapphire_ros1 sapphire.launch \
-  config_file:=/workspace/src/sapphire/cfg/sapphire_mid360.toml \
-  lidar_topic:=/velodyne_points \
-  imu_topic:=/imu_raw \
-  odom_topic:=/odometry \
+  config_file:=/path/to/sapphire/cfg/sapphire_mid360.toml \
+  lidar_topic:=/your_lidar \
+  imu_topic:=/your_imu \
   rviz:=true
 ```
 
-For HILTI interactive checks, use the lightweight RViz profile:
+The node always publishes `/sapphire/odometry` and `/sapphire/deskewed`.
+`/sapphire/trajectory`, `/sapphire/pgo/map`, and `/sapphire/pgo/graph` are
+published only when the profile sets `pgo.enabled` to true.
+
+To play a bag, add `use_sim_time:=true` to the launch command, then in another terminal:
+
+```bash
+rosbag play --clock your.bag
+```
+
+Stop the launch with Ctrl-C so the TUM file can be written. A killed process
+does not flush it. `trajectory_output:=/path/to/trajectory.tum` overrides the
+path in the TOML profile.
+
+HILTI 2023 handheld recordings can be started directly:
 
 ```bash
 roslaunch sapphire_ros1 hilti_2023_handheld.launch \
-  config_file:=/workspace/src/sapphire/cfg/sapphire_hilti_2023_handheld_tuned.toml \
-  bag:=/data/rosbags/site1_handheld_5.bag \
-  rviz:=true \
-  rviz_config:=/workspace/src/sapphire_ros1/launch/visual_check.rviz \
-  trajectory_output:=/workspace/results/hilti_2023/reproduction/trajectory.tum
+  config_file:=/path/to/sapphire/cfg/sapphire_hilti_2023_handheld.toml \
+  bag:=/path/to/site1_handheld_1.bag \
+  rviz:=true
 ```
-
-HILTI SLAM Challenge 2023 profiles use the supplied calibration and duplicate
-the LiDAR clock offset into every point timestamp:
-
-```bash
-# Handheld: PandarXT-32 + Alphasense IMU
-roslaunch sapphire_ros1 hilti_2023_handheld.launch \
-  config_file:=/workspace/src/sapphire/cfg/sapphire_hilti_2023_handheld_tuned.toml \
-  bag:=/data/rosbags/site1_handheld_1.bag
-
-# Robot: RoboSense BPearl + Xsens MTi-600 IMU
-roslaunch sapphire_ros1 hilti_2023_robot.launch \
-  config_file:=/workspace/src/sapphire/cfg/sapphire_hilti_2023_robot.toml \
-  bag:=/data/rosbags/site2_robot_1.bag
-```
-
-Both HILTI launches publish odometry, TF, and TUM trajectories in the IMU
-frame, matching the challenge submission convention.
-
-For a bag that publishes `/clock`, add `use_sim_time:=true`. The node uses two
-spinner threads so IMU callbacks remain live while LiDAR processing waits for
-scan-end IMU coverage.
-
-## Tests
-
-```bash
-catkin build sapphire_ros1 --no-deps --make-args tests
-catkin test sapphire_ros1
-```
-
-The conversion tests cover nanosecond timestamps, IMU scaling fields, custom
-point cloud serialization/ingestion, frames, and odometry velocity conversion.
-Bag replay, TF connectivity, callback progress, and ROS 1/ROS 2 parity remain
-runtime tests for the pinned image.
-
-The pinned image supplies Eigen, PCL, GTSAM, small_gicp, toml++, and spdlog
-from `/opt/sapphire-deps`. These source-pinned algorithm dependencies are not
-resolved by `rosdep`; use the image rather than installing a second system PCL.
-
-## Status
-
-The catkin wrapper, launch/RViz configuration, conversion tests, and in-node
-TUM trajectory export are implemented. The adapter builds in the pinned
-Noetic image and its conversion tests pass. HILTI bag replay, RViz
-visualization, trajectory persistence, and SE(3)-aligned sparse-reference
-evaluation have been exercised on `site1_handheld_5` and
-`site1_handheld_2`. See `docs/HILTI_TUNING.md` for measured results and
-`docs/HILTI_REPRODUCTION.md` for the restart procedure.
-
