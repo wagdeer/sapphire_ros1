@@ -133,46 +133,50 @@ SapphireRos::SapphireRos()
 }
 
 SapphireRos::~SapphireRos() {
-    saveTrajectory();
+    (void)saveTrajectory();
 }
 
-void SapphireRos::saveTrajectory() {
+bool SapphireRos::saveTrajectory() {
     if (trajectory_saved_.exchange(true)) {
-        return;
+        return true;
     }
     if (trajectory_output_path_.empty() || !pipeline_) {
-        return;
+        return true;
     }
 
-    try {
-        sapphire::MapTrajectory trajectory = pipeline_->mapTrajectory();
-        for (sapphire::MapTrajectorySample& sample : trajectory.samples) {
-            sample.T_map_lidar =
-                sample.T_map_lidar * T_pose_lidar_;
-        }
-        const sapphire::TumWriteResult result = sapphire::writeTumTrajectory(
-            trajectory_output_path_, trajectory);
-        if (result.written == 0) {
-            ROS_WARN(
-                "[sapphire_ros1] no TUM trajectory written to %s",
-                trajectory_output_path_.c_str());
-            return;
-        }
+    sapphire::MapTrajectory trajectory = pipeline_->mapTrajectory();
+    for (sapphire::MapTrajectorySample& sample : trajectory.samples) {
+        sample.T_map_lidar = sample.T_map_lidar * T_pose_lidar_;
+    }
+    const sapphire::TrajectorySaveReport report = sapphire::saveMapTrajectory(
+        trajectory_output_path_, trajectory);
+    switch (report.status) {
+    case sapphire::TrajectorySaveStatus::NotConfigured:
+        return true;
+    case sapphire::TrajectorySaveStatus::Empty:
+        ROS_WARN(
+            "[sapphire_ros1] no TUM trajectory written to %s",
+            trajectory_output_path_.c_str());
+        return true;
+    case sapphire::TrajectorySaveStatus::Written:
         ROS_INFO(
             "[sapphire_ros1] wrote %zu TUM poses to %s",
-            result.written,
+            report.result.written,
             trajectory_output_path_.c_str());
-        if (result.skipped > 0) {
+        if (report.result.skipped > 0) {
             ROS_WARN(
                 "[sapphire_ros1] skipped %zu trajectory poses with "
                 "non-finite values or non-increasing timestamps",
-                result.skipped);
+                report.result.skipped);
         }
-    } catch (const std::exception& error) {
+        return true;
+    case sapphire::TrajectorySaveStatus::IoFailure:
         ROS_ERROR(
             "[sapphire_ros1] failed to write TUM trajectory: %s",
-            error.what());
+            report.error.c_str());
+        return false;
     }
+    return false;
 }
 
 void SapphireRos::lidarCallback(

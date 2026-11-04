@@ -38,7 +38,10 @@ public:
     SapphireRos& operator=(const SapphireRos&) = delete;
 
     /// Write the map trajectory in TUM format. Safe to call more than once.
-    void saveTrajectory();
+    /// Returns false only when a configured write fails. An empty path, a
+    /// missing pipeline, and an empty trajectory are successful. A repeated
+    /// call returns true; the first call reports the I/O result.
+    bool saveTrajectory();
 
 private:
     void lidarCallback(const sensor_msgs::PointCloud2ConstPtr& message);

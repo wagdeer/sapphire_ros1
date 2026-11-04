@@ -51,15 +51,15 @@ int main(int argc, char** argv) {
             ros::WallDuration(0.1).sleep();
         }
         spinner.stop();
-        node.saveTrajectory();
+        const bool trajectory_ok = node.saveTrajectory();
         if (ros::ok()) {
             ros::shutdown();
         }
         // The pose-graph worker may still be servicing a dense loop-closure
-        // backlog. The trajectory is already atomically persisted, so skip
+        // backlog. The trajectory save has already been attempted, so skip
         // potentially long C++ destructors that would make roslaunch SIGKILL
-        // an otherwise completed run.
-        std::_Exit(EXIT_SUCCESS);
+        // an otherwise finished run. The exit status reports an I/O failure.
+        std::_Exit(trajectory_ok ? EXIT_SUCCESS : EXIT_FAILURE);
     } catch (const std::exception& error) {
         ROS_FATAL("[sapphire_ros1] fatal startup error: %s", error.what());
         return 1;
