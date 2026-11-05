@@ -113,8 +113,10 @@ SapphireRos::SapphireRos()
         pgo_graph_publisher_ =
             node_handle_.advertise<visualization_msgs::MarkerArray>(
                 "sapphire/pgo/graph", 1, true);
-        pgo_visualization_timer_ = node_handle_.createTimer(
-            ros::Duration(1.0),
+        // Visualization must keep refreshing after bag playback stops
+        // publishing /clock, including the final map/snapshot rebuild.
+        pgo_visualization_timer_ = node_handle_.createWallTimer(
+            ros::WallDuration(1.0),
             &SapphireRos::pgoVisualizationCallback,
             this);
     }
@@ -495,7 +497,7 @@ void SapphireRos::publishDeskewed(double stamp) {
 }
 
 void SapphireRos::pgoVisualizationCallback(
-    const ros::TimerEvent& /*event*/)
+    const ros::WallTimerEvent& /*event*/)
 {
     try {
         publishPgoVisualization();

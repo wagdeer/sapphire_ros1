@@ -43,7 +43,10 @@ int main(int argc, char** argv) {
 
     try {
         sapphire_ros1::SapphireRos node;
-        ros::AsyncSpinner spinner(2);
+        // LiDAR and IMU callbacks can occupy two workers indefinitely during
+        // replay. Keep a third worker available for the PGO visualization
+        // WallTimer and other control callbacks.
+        ros::AsyncSpinner spinner(3);
         std::signal(SIGINT, requestShutdown);
         std::signal(SIGTERM, requestShutdown);
         spinner.start();

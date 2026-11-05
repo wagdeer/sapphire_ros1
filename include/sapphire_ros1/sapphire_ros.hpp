@@ -46,7 +46,7 @@ public:
 private:
     void lidarCallback(const sensor_msgs::PointCloud2ConstPtr& message);
     void imuCallback(const sensor_msgs::ImuConstPtr& message);
-    void pgoVisualizationCallback(const ros::TimerEvent& event);
+    void pgoVisualizationCallback(const ros::WallTimerEvent& event);
 
     void publishOdometry(const sapphire::OdometryResult& result);
     void publishDeskewed(double stamp);
@@ -61,7 +61,7 @@ private:
     ros::Publisher deskewed_publisher_;
     ros::Publisher pgo_map_publisher_;
     ros::Publisher pgo_graph_publisher_;
-    ros::Timer pgo_visualization_timer_;
+    ros::WallTimer pgo_visualization_timer_;
 
     ros::Subscriber lidar_subscriber_;
     ros::Subscriber imu_subscriber_;
