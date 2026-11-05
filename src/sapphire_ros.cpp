@@ -76,13 +76,7 @@ SapphireRos::SapphireRos()
     if (!trajectory_output_override.empty()) {
         trajectory_output_path_ = trajectory_output_override;
     }
-    lidar_ingest_.time_field = config.sensor.lidar.time_field;
-    lidar_ingest_.time_unit = config.sensor.lidar.time_unit;
-    lidar_ingest_.time_ref = config.sensor.lidar.time_ref;
-    lidar_ingest_.max_scan_duration =
-        config.sensor.lidar.max_scan_duration;
-    lidar_ingest_.header_tolerance = config.sensor.lidar.header_tolerance;
-    require_point_time_ = config.sensor.lidar.require_point_time;
+    lidar_time_ = sapphire::makeLidarTimeSession(config.sensor.lidar);
 
     ROS_INFO(
         "[sapphire_ros1] loaded algorithm config: %s",
@@ -194,7 +188,7 @@ void SapphireRos::lidarCallback(
     try {
         const sapphire::sensor::CloudView view = makeCloudView(*message);
         const sapphire::sensor::IngestResult ingested =
-            sapphire::sensor::ingest(view, lidar_ingest_);
+            lidar_time_.ingest(view);
         const double stamp = view.header_stamp;
 
         if (!std::isfinite(stamp)) {
@@ -202,33 +196,17 @@ void SapphireRos::lidarCallback(
                 5.0, "[sensor] dropping lidar frame with non-finite stamp");
             return;
         }
-        if (ingested.points.empty()) {
+        const sapphire::sensor::LidarTimeSession::Commit time_commit =
+            lidar_time_.commit(ingested);
+        if (!time_commit.accept) {
             ROS_WARN_THROTTLE(
                 5.0,
                 "[sensor] dropping lidar frame: %s",
-                ingested.time.note.empty() ? "no points"
-                                           : ingested.time.note.c_str());
-            return;
-        }
-        if (!ingested.time.ok && require_point_time_) {
-            ROS_WARN_THROTTLE(
-                5.0,
-                "[sensor] dropping lidar frame: %s",
-                ingested.time.note.c_str());
+                time_commit.drop_reason.c_str());
             return;
         }
 
-        if (ingested.time.ok && !lidar_time_locked_) {
-            lidar_ingest_.time_field = ingested.time.field;
-            lidar_ingest_.time_unit =
-                sapphire::sensor::unitName(ingested.time.unit);
-            lidar_ingest_.time_ref =
-                ingested.time.ref == sapphire::sensor::TimeRef::Absolute
-                ? "absolute"
-                : "relative";
-            locked_lidar_span_s_ = ingested.time.span_s;
-            lidar_time_locked_ = true;
-
+        if (time_commit.just_locked) {
             const sapphire::sensor::FieldDescriptor* time_field =
                 sapphire::sensor::findField(view, ingested.time.field);
             ROS_INFO(
@@ -237,8 +215,8 @@ void SapphireRos::lidarCallback(
                 ingested.time.field.c_str(),
                 datatypeLabel(
                     time_field == nullptr ? 0 : time_field->datatype),
-                lidar_ingest_.time_unit.c_str(),
-                lidar_ingest_.time_ref.c_str(),
+                lidar_time_.config().time_unit.c_str(),
+                lidar_time_.config().time_ref.c_str(),
                 ingested.time.span_s,
                 ingested.time.header_offset_s,
                 ingested.points.size(),
@@ -247,31 +225,21 @@ void SapphireRos::lidarCallback(
             ROS_INFO(
                 "[sensor] profile: time_field=\"%s\" time_unit=\"%s\" "
                 "time_ref=\"%s\"",
-                lidar_ingest_.time_field.c_str(),
-                lidar_ingest_.time_unit.c_str(),
-                lidar_ingest_.time_ref.c_str());
-        } else if (
-            ingested.time.ok && lidar_time_locked_
-            && locked_lidar_span_s_ > 0.0 && !warned_lidar_span_ratio_) {
-            const double ratio =
-                ingested.time.span_s / locked_lidar_span_s_;
-            if (ratio > 10.0 || ratio < 0.1) {
-                warned_lidar_span_ratio_ = true;
-                ROS_WARN(
-                    "[sensor] lidar span changed by more than 10x under the "
-                    "locked unit: locked=%.6fs now=%.6fs",
-                    locked_lidar_span_s_,
-                    ingested.time.span_s);
-            }
+                lidar_time_.config().time_field.c_str(),
+                lidar_time_.config().time_unit.c_str(),
+                lidar_time_.config().time_ref.c_str());
+        } else if (time_commit.warn_span_ratio) {
+            ROS_WARN(
+                "[sensor] lidar span changed by more than 10x under the "
+                "locked unit: locked=%.6fs now=%.6fs",
+                time_commit.locked_span_s,
+                time_commit.span_s);
         }
-        if (
-            ingested.time.ok && ingested.time.header_mismatch
-            && !warned_lidar_header_mismatch_) {
-            warned_lidar_header_mismatch_ = true;
+        if (time_commit.warn_header_mismatch) {
             ROS_WARN(
                 "[sensor] lidar header_mismatch: header_offset=%+.6fs; "
                 "using point time as absolute seconds",
-                ingested.time.header_offset_s);
+                time_commit.header_offset_s);
         }
 
         pipeline_->pushLidar(
