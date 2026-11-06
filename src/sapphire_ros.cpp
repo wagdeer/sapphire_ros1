@@ -115,12 +115,13 @@ SapphireRos::SapphireRos()
             this);
     }
 
-    // At least two callback threads are required: LiDAR processing can wait
-    // for scan-end IMU coverage, so a single-threaded spinner can deadlock.
+    // pushLidar waits up to sapphire::OdometryPipeline::kImuCoverageWait for scan-end
+    // IMU coverage and releases the IMU mutex while waiting. Another
+    // callback thread must deliver that IMU; otherwise the scan is dropped.
     lidar_subscriber_ =
         node_handle_.subscribe("lidar/points", 1, &SapphireRos::lidarCallback,
                                this);
-    // Keep enough IMU samples queued to cover the core's 500 ms scan-end wait.
+    // Keep enough IMU samples queued to cover kImuCoverageWait.
     imu_subscriber_ =
         node_handle_.subscribe(
             "imu/data", 100, &SapphireRos::imuCallback, this);

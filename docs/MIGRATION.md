@@ -149,7 +149,7 @@ latched publishers:
 | Stream | ROS 1 behavior |
 |---|---|
 | LiDAR input | `queue_size=1` |
-| IMU input | `queue_size=100`, enough to cover the 500 ms scan-end wait |
+| IMU input | `queue_size=100`, enough to cover `OdometryPipeline::kImuCoverageWait` |
 | Odometry output | `queue_size=10` |
 | Deskewed cloud | `queue_size=1` |
 | Trajectory path | `queue_size=1`, latched |
@@ -162,9 +162,11 @@ The large point-cloud topics must not use an unbounded queue.
 
 This is the highest-risk adapter detail.
 
-The core can wait up to 500 ms inside LiDAR processing for IMU measurements
-that cover the scan end time. A single-threaded `ros::spin()` can block the IMU
-callback while the LiDAR callback is waiting for it.
+After the first scan, the core waits up to
+`sapphire::OdometryPipeline::kImuCoverageWait` of wall time for IMU
+measurements that cover the scan end. The IMU mutex is released during that
+wait. A single-threaded `ros::spin()` cannot deliver the IMU, so the wait
+expires and the scan is dropped.
 
 Required behavior:
 
@@ -278,7 +280,7 @@ Run the complete Sapphire CTest suite in the pinned image before adapter work.
 - Topic rate and type checks.
 - TF connectivity from `map` to `lidar`.
 - IMU initialization during stationary data.
-- LiDAR callback waiting for scan-end IMU coverage without deadlock.
+- LiDAR callback waiting up to `kImuCoverageWait` for scan-end IMU coverage. One callback thread drops the scan instead of stalling IMU delivery.
 - PGO visualization subscription behavior.
 - Shutdown trajectory dump.
 
