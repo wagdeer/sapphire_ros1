@@ -68,8 +68,8 @@ ARG EIGEN_REF=3.4.0
 ARG EIGEN_COMMIT=3147391d946bb4b6c68edd901f2add6ac1f31f8c
 ARG PCL_REF=pcl-1.14.1
 ARG PCL_COMMIT=5f608cfb5397fe848c7d61c4ae5f5b1ab760ba80
-ARG GTSAM_REF=4.2.0
-ARG GTSAM_COMMIT=4f66a491ffc83cf092d0d818b11dc35135521612
+ARG GTSAM_REF=4.3.0
+ARG GTSAM_COMMIT=71a25ca36c084cbad1f872e812d6d97fbadfdb05
 ARG SMALL_GICP_REF=v1.0.1
 ARG SMALL_GICP_COMMIT=57c1106daf83c2c79ee0c58a9c7ed0032298ff4e
 ARG TOMLPLUSPLUS_REF=v3.4.0
@@ -145,9 +145,13 @@ RUN git clone --depth 1 --branch "${PCL_REF}" \
     && cmake --install /tmp/pcl/build \
     && rm -rf /tmp/pcl
 
+COPY docker/patches/gtsam-4.3.0-empty-list.patch /tmp/
+
 RUN git clone --depth 1 --branch "${GTSAM_REF}" \
         https://github.com/borglab/gtsam.git /tmp/gtsam \
     && test "$(git -C /tmp/gtsam rev-parse HEAD)" = "${GTSAM_COMMIT}" \
+    && git -C /tmp/gtsam apply \
+        /tmp/gtsam-4.3.0-empty-list.patch \
     && cmake -S /tmp/gtsam -B /tmp/gtsam/build -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX="${SAPPHIRE_DEPS_PREFIX}" \

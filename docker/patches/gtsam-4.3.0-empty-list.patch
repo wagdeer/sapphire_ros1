@@ -1,0 +1,63 @@
+diff --git a/gtsam/CMakeLists.txt b/gtsam/CMakeLists.txt
+index eb29354..42ea3cf 100644
+--- a/gtsam/CMakeLists.txt
++++ b/gtsam/CMakeLists.txt
+@@ -37,8 +37,6 @@ endif()
+ set (gtsam_subdirs
+     base
+     basis
+-    constrained
+-    certifiable
+     geometry
+     inference
+     symbolic
+@@ -127,10 +125,14 @@ foreach(subdir ${gtsam_subdirs})
+       list(APPEND subdir_srcs ${subdir_cuda_srcs})
+     else()
+       file(GLOB_RECURSE subdir_cuda_srcs "${subdir}/cuda/*")
+-      list(REMOVE_ITEM subdir_srcs ${subdir_cuda_srcs})
++      if(subdir_cuda_srcs)
++        list(REMOVE_ITEM subdir_srcs ${subdir_cuda_srcs})
++      endif()
+     endif()
+     list(REMOVE_ITEM subdir_srcs ${excluded_sources})
+ 	file(GLOB subdir_test_files "${subdir}/tests/*")
+-	list(REMOVE_ITEM subdir_srcs ${subdir_test_files}) # Remove test files from sources compiled into library
++	if(subdir_test_files)
++	  list(REMOVE_ITEM subdir_srcs ${subdir_test_files}) # Remove test files from sources compiled into library
++	endif()
+     gtsam_assign_source_folders("${subdir_srcs}") # Create MSVC structure
+     set(${subdir}_srcs ${subdir_srcs})
+diff --git a/gtsam/constrained/QpCost.h b/gtsam/constrained/QpCost.h
+index 601a374..0a003b7 100644
+--- a/gtsam/constrained/QpCost.h
++++ b/gtsam/constrained/QpCost.h
+@@ -39,6 +39,17 @@ class GTSAM_EXPORT QpCost : public NonlinearFactor {
+   using This = QpCost;
+   using shared_ptr = std::shared_ptr<This>;
+ 
++ private:
++  static const GaussianFactor& checkedFactor(
++      const GaussianFactor::shared_ptr& factor) {
++    if (!factor) {
++      throw std::invalid_argument("QpCost: shared Gaussian factor is null.");
++    }
++    return *factor;
++  }
++
++ public:
++
+   /** Default constructor for I/O. */
+   QpCost() = default;
+ 
+@@ -58,9 +69,7 @@ class GTSAM_EXPORT QpCost : public NonlinearFactor {
+    * factor.
+    */
+   explicit QpCost(const GaussianFactor::shared_ptr& factor)
+-      : QpCost(factor ? *factor
+-                      : throw std::invalid_argument(
+-                            "QpCost: shared Gaussian factor is null.")) {}
++      : QpCost(checkedFactor(factor)) {}
+ 
+   /**
+    * Construct a row-space quadratic cost over direct Vector or Matrix Values.
