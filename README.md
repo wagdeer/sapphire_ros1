@@ -2,72 +2,53 @@
 
 ROS 1 Noetic interface for [Sapphire](https://github.com/wagdeer/sapphire).
 
-Put the core and this package in the same catkin workspace. The core is found
-as the sibling directory `../sapphire`.
+Put this package next to the core. The build uses `../sapphire` directly.
 
 ```text
 catkin_ws/src/
-├── sapphire/          https://github.com/wagdeer/sapphire
+├── sapphire/
 └── sapphire_ros1/
 ```
 
-Further reading:
-
-- [docs/DOCKER.md](docs/DOCKER.md): pinned toolchain and X11
-- [docs/INTERFACE_CONTRACT.md](docs/INTERFACE_CONTRACT.md): topics, frames, and queues
-- [docs/HILTI_REPRODUCTION.md](docs/HILTI_REPRODUCTION.md): HILTI 2023 handheld replay
-- [sapphire/docs/DATASET_REPLAY.md](https://github.com/wagdeer/sapphire/blob/master/docs/DATASET_REPLAY.md): dataset replay in the core repository
+[sapphire_ros2](https://github.com/wagdeer/sapphire_ros2) is the ROS 2 Humble package. Topic names, frames, and queue sizes are the same and are listed in [docs/INTERFACE_CONTRACT.md](docs/INTERFACE_CONTRACT.md).
 
 ## Docker
 
-From this repository:
+Use the image. It already has Noetic and the libraries.
 
 ```bash
 docker build -f docker/Dockerfile -t sapphire:noetic .
+docker run --rm -it -v ~/catkin_ws:/workspace sapphire:noetic
 ```
 
-The image is Ubuntu 20.04 with ROS Noetic, and already contains Eigen 3.4.0, PCL 1.14.1, GTSAM 4.3.0, small_gicp 1.0.1, spdlog, and toml++ 3.4.0.
-
-Mount a workspace that already contains `src/sapphire` and `src/sapphire_ros1`:
+`~/catkin_ws/src` needs both `sapphire` and `sapphire_ros1`. Inside the container:
 
 ```bash
-docker run --rm -it -v ~/catkin_ws:/workspace sapphire:noetic
 cd /workspace
 catkin_make
 source devel/setup.bash
 ```
 
-The image entrypoint sources `/opt/ros/noetic` and, when present,
-`devel_ros1/setup.bash` or `devel/setup.bash`. A workspace that also contains
-a ROS 2 build should use the separate `devel_ros1` layout in
-[docs/DOCKER.md](docs/DOCKER.md) instead of `devel/`. RViz needs the X11
-forwarding shown there. `foxglove_bridge` is not in this image; it is added by
-`docker/Dockerfile.foxglove`.
+X11 and a separate `devel_ros1` space are in [docs/DOCKER.md](docs/DOCKER.md).
 
 ## Without Docker
 
-Install Noetic and the packages that come from apt:
+| Library | Version | Ubuntu 20.04 |
+|---|---|---|
+| Eigen | 3.4.0 | too old in apt; build it |
+| PCL | 1.14.1 | too old in apt; build it |
+| OpenMP | | `libomp-dev` |
+| spdlog | | `libspdlog-dev` |
+| GTSAM | 4.2.0 | built against Eigen 3.4 in the Dockerfile |
+| small_gicp | 1.0.1 | build `v1.0.1` |
+
+This package's CMake requires PCL 1.14, so the apt PCL 1.10 package cannot be used. toml++ 3.4 is downloaded by CMake when it is not already installed. Message and TF packages are listed in `package.xml`.
 
 ```bash
-sudo apt install build-essential cmake git pkg-config \
-  libboost-all-dev libflann-dev libomp-dev libspdlog-dev \
-  ros-noetic-pcl-conversions ros-noetic-rosbag \
-  ros-noetic-rviz ros-noetic-tf2-ros
+sudo apt install build-essential cmake git libomp-dev libspdlog-dev
 ```
 
-Noetic's Eigen and PCL are too old. Build these from source, Eigen first, and install them where CMake can find them:
-
-| Library | Version |
-|---|---|
-| [Eigen](https://gitlab.com/libeigen/eigen) | 3.4.0 |
-| [PCL](https://github.com/PointCloudLibrary/pcl) | 1.14.1 |
-| [GTSAM](https://github.com/borglab/gtsam) | 4.3.0 |
-| [small_gicp](https://github.com/koide3/small_gicp) | 1.0.1 |
-| [toml++](https://github.com/marzer/tomlplusplus) | 3.4.0 |
-
-On Ubuntu 20.04, configure GTSAM with `-DGTSAM_WITH_TBB=OFF` and apply `docker/patches/gtsam-4.3.0-empty-list.patch` before building. The Dockerfile is the reference for the other configure flags. In particular it builds PCL with VTK turned off, which avoids an extra MPI dependency. Install Eigen before PCL, GTSAM, and small_gicp, and point those builds at that Eigen.
-
-Then build the workspace:
+Eigen 3.4.0, PCL 1.14.1, GTSAM 4.2.0, and small_gicp 1.0.1 are built in [docker/Dockerfile](docker/Dockerfile). GTSAM is tag `4.2.0` with `GTSAM_WITH_TBB=OFF`. `ppa:borglab/gtsam-release-4.2` also publishes a 4.2 package for Ubuntu 20.04, built against the distro Eigen 3.3. This package needs Eigen 3.4, so it uses the Dockerfile build.
 
 ```bash
 source /opt/ros/noetic/setup.bash
@@ -78,36 +59,50 @@ source devel/setup.bash
 
 ## Run
 
-`config_file` is required. The topic arguments below override the launch
-defaults `/front_lidar` and `/front_lidar/imu`.
+`config_file` is required. The topic arguments override `/front_lidar` and `/front_lidar/imu`.
 
 ```bash
 roslaunch sapphire_ros1 sapphire.launch \
-  config_file:=/path/to/sapphire/cfg/sapphire_mid360.toml \
+  config_file:=/path/to/sapphire/cfg/mid360.toml \
   lidar_topic:=/your_lidar \
   imu_topic:=/your_imu \
   rviz:=true
 ```
 
-The node always publishes `/sapphire/odometry` and `/sapphire/deskewed`.
-`/sapphire/trajectory`, `/sapphire/pgo/map`, and `/sapphire/pgo/graph` are
-published only when the profile sets `pgo.enabled` to true.
+The node always publishes `/sapphire/odometry` and `/sapphire/deskewed`. It publishes `/sapphire/trajectory`, `/sapphire/pgo/map`, and `/sapphire/pgo/graph` when the profile sets `pgo.enabled` to true.
 
-To play a bag, add `use_sim_time:=true` to the launch command, then in another terminal:
+## Play a bag
+
+```bash
+roslaunch sapphire_ros1 sapphire.launch \
+  config_file:=/path/to/sapphire/cfg/mid360.toml \
+  lidar_topic:=/your_lidar \
+  imu_topic:=/your_imu \
+  use_sim_time:=true \
+  trajectory_output:=/path/to/trajectory.tum
+```
+
+In another terminal:
 
 ```bash
 rosbag play --clock your.bag
 ```
 
-Stop the launch with Ctrl-C so the TUM file can be written. A killed process
-does not flush it. `trajectory_output:=/path/to/trajectory.tum` overrides the
-path in the TOML profile.
+Stop the launch with Ctrl-C after the bag ends. That writes `trajectory.tum`. `kill -9` does not. `trajectory_output` replaces the path stored in the TOML profile. Pass it: several profiles point at `/workspace/results/...`.
 
-HILTI 2023 handheld recordings can be started directly:
+Dataset profiles, HILTI launch files, and bag conversion are in [DATASET_REPLAY.md](https://github.com/wagdeer/sapphire/blob/master/docs/DATASET_REPLAY.md).
+
+A HILTI handheld bag can be started in one command. The launch file sets the topics and frames. `config_file` is still required.
 
 ```bash
 roslaunch sapphire_ros1 hilti_2023_handheld.launch \
-  config_file:=/path/to/sapphire/cfg/sapphire_hilti_2023_handheld.toml \
+  config_file:=/path/to/sapphire/cfg/hilti_2023_handheld.toml \
   bag:=/path/to/site1_handheld_1.bag \
   rviz:=true
 ```
+
+`hilti_2022_handheld.launch` and `hilti_2023_robot.launch` work the same way with `cfg/hilti_2022_handheld.toml` and `cfg/hilti_2023_robot.toml`. The three commands are in [docs/HILTI_REPRODUCTION.md](docs/HILTI_REPRODUCTION.md).
+
+## License
+
+MIT.

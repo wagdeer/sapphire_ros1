@@ -1,5 +1,7 @@
 # Sapphire ROS 1 Migration Design
 
+This is an implementation note for how the ROS 1 package was built. Install and run instructions are in [README.md](../README.md).
+
 Status: the Noetic adapter, launch files, and pinned toolchain image are implemented. A numeric parity threshold against ROS 2 has not been set.
 
 ## 1. Goal

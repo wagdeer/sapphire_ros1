@@ -22,7 +22,8 @@ find_package(Eigen3 REQUIRED)
 
 # The adapter itself does not link PCL. The core does, and Noetic's system
 # PCL 1.10 must never be selected in place of the pinned 1.14 installation.
-find_package(PCL 1.14 REQUIRED)
+# common avoids PCL's visualization component, whose VTK target requires MPI.
+find_package(PCL 1.14 REQUIRED COMPONENTS common)
 if(PCL_VERSION VERSION_LESS 1.14.0)
   message(FATAL_ERROR
     "Sapphire ROS 1 requires PCL >= 1.14.0; found ${PCL_VERSION} at ${PCL_DIR}")
