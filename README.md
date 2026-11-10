@@ -39,7 +39,7 @@ X11 and a separate `devel_ros1` space are in [docs/DOCKER.md](docs/DOCKER.md).
 | PCL | 1.14.1 | too old in apt; build it |
 | OpenMP | | `libomp-dev` |
 | spdlog | | `libspdlog-dev` |
-| GTSAM | 4.2.0 | built against Eigen 3.4 in the Dockerfile |
+| GTSAM | 4.3.0 | built against Eigen 3.4 in the Dockerfile |
 | small_gicp | 1.0.1 | build `v1.0.1` |
 
 This package's CMake requires PCL 1.14, so the apt PCL 1.10 package cannot be used. toml++ 3.4 is downloaded by CMake when it is not already installed. Message and TF packages are listed in `package.xml`.
@@ -48,7 +48,7 @@ This package's CMake requires PCL 1.14, so the apt PCL 1.10 package cannot be us
 sudo apt install build-essential cmake git libomp-dev libspdlog-dev
 ```
 
-Eigen 3.4.0, PCL 1.14.1, GTSAM 4.2.0, and small_gicp 1.0.1 are built in [docker/Dockerfile](docker/Dockerfile). GTSAM is tag `4.2.0` with `GTSAM_WITH_TBB=OFF`. `ppa:borglab/gtsam-release-4.2` also publishes a 4.2 package for Ubuntu 20.04, built against the distro Eigen 3.3. This package needs Eigen 3.4, so it uses the Dockerfile build.
+Eigen 3.4.0, PCL 1.14.1, GTSAM 4.3.0, and small_gicp 1.0.1 are built in [docker/Dockerfile](docker/Dockerfile). GTSAM is tag `4.3.0` with `GTSAM_WITH_TBB=OFF` and a small compatibility patch for empty CMake glob lists. This package needs Eigen 3.4, so it uses the Dockerfile build.
 
 ```bash
 source /opt/ros/noetic/setup.bash

@@ -7,11 +7,11 @@ The `sapphire:noetic` image is a build environment: Ubuntu 20.04, ROS Noetic, an
 | Ubuntu / ROS | 20.04 / Noetic |
 | Eigen | 3.4.0 |
 | PCL | 1.14.1 |
-| GTSAM | 4.2.0 |
+| GTSAM | 4.3.0 |
 | small_gicp | 1.0.1 |
 | toml++ | 3.4.0 |
 
-These libraries are installed under `/opt/sapphire-deps`, so CMake does not pick up Ubuntu's Eigen 3.3 or PCL 1.10. GTSAM 4.2.0 is built against that Eigen 3.4 with `GTSAM_WITH_TBB=OFF`. The Ubuntu 20.04 package from `ppa:borglab/gtsam-release-4.2` is built against Eigen 3.3.
+These libraries are installed under `/opt/sapphire-deps`, so CMake does not pick up Ubuntu's Eigen 3.3 or PCL 1.10. GTSAM 4.3.0 is built against that Eigen 3.4 with `GTSAM_WITH_TBB=OFF`. The build applies the pinned `gtsam-4.3.0-empty-list.patch` compatibility patch.
 
 ## Build the image
 
